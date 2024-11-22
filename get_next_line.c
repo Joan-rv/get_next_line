@@ -29,6 +29,7 @@ void* memresize(void* buf, size_t old_size, size_t size) {
 char* get_next_line(int fd) {
     static char* buf = NULL;
     static size_t size = 0;
+    bool done_reading = false;
     char new[BUF_SIZE];
     while (true) {
         for (size_t i = 0; i * sizeof(char) < size; i++) {
@@ -43,20 +44,23 @@ char* get_next_line(int fd) {
                 return tmp;
             }
         }
-        size_t old_size = size;
-        size += read(fd, new, BUF_SIZE);
-        if (old_size == size) {
-            if (size == 0) {
-                return NULL;
-            }
-            char* tmp = malloc(size + 1);
+        if (done_reading) {
+            char* tmp = malloc((size + 1) * sizeof(char));
             memcpy(tmp, buf, size);
             tmp[size] = '\0';
             size = 0;
-            return buf;
+            return tmp;
         }
-        buf = memresize(buf, old_size, size);
-        memcpy(buf + old_size / sizeof(char), new, size - old_size);
+        size_t read_size = read(fd, new, BUF_SIZE);
+        if (read_size < BUF_SIZE) {
+            if (read_size == 0) {
+                return NULL;
+            }
+            done_reading = true;
+        }
+        buf = memresize(buf, size, size + read_size);
+        memcpy(buf + size / sizeof(char), new, read_size);
+        size += read_size;
     }
 }
 
@@ -65,6 +69,7 @@ int main() {
     char* line;
     while ((line = get_next_line(0))) {
         printf("%s", line);
+        fflush(stdout);
         free(line);
     }
     // close(fd);
