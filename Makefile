@@ -1,8 +1,31 @@
-CC?=clang
-CFLAGS?=-Wall -Wextra -O2
+CC=gcc
+CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
+AR=ar
+RM=rm -f
+OBJ=get_next_line.o
+DESTDIR=/usr/local
 
-get_next_line: get_next_line.c
-	$(CC) -o $@ $< $(CFLAGS)
+.PHONY: clean all install
+
+all: test lib
+
+install: lib
+	install -m0755 libgnl.so $(DESTDIR)/lib/
+	install -m0755 libgnl.h $(DESTDIR)/include/
+
+test: test.o libgnl.a
+	$(CC) -lm $^ -o $@
+
+lib: libgnl.a libgnl.so
+
+libgnl.a: $(OBJ)
+	$(AR) rcs $@ $^
+
+libgnl.so: $(OBJ)
+	$(CC) -shared $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm get_next_line
+	$(RM) *.o *.a *.so test
