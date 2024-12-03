@@ -1,3 +1,4 @@
+NAME=libgnl
 CC=gcc
 CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
 AR=ar
@@ -5,7 +6,7 @@ RM=rm -f
 OBJ=get_next_line.o
 DESTDIR=/usr/local
 
-.PHONY: clean all install
+.PHONY: clean release debug all lib install
 
 release: CFLAGS+=-O2
 release: all
@@ -19,15 +20,15 @@ install: lib
 	install -m0755 libgnl.so $(DESTDIR)/lib/
 	install -m0755 libgnl.h $(DESTDIR)/include/
 
-test: test.o libgnl.a
+test: test.o $(NAME).a
 	$(CC) -lm $^ -o $@
 
-lib: libgnl.a libgnl.so
+lib: $(NAME).a $(NAME).so
 
-libgnl.a: $(OBJ)
+$(NAME).a: $(OBJ)
 	$(AR) rcs $@ $^
 
-libgnl.so: $(OBJ)
+$(NAME).so: $(OBJ)
 	$(CC) -shared $^ -o $@
 
 %.o: %.c
