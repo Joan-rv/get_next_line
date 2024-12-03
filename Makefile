@@ -7,6 +7,12 @@ DESTDIR=/usr/local
 
 .PHONY: clean all install
 
+release: CFLAGS+=-O2
+release: all
+
+debug: CFLAGS+=-Werror -g
+debug: all
+
 all: test lib
 
 install: lib
