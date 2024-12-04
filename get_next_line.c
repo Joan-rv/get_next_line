@@ -27,6 +27,9 @@ void* memresize(void* buf, size_t old_size, size_t size) {
 }
 
 char* remove_as_string(char** buf, size_t* size, size_t pos) {
+    if (*size == 0) {
+        return NULL;
+    }
     char* tmp = malloc((pos + 2) * sizeof(char));
     memcpy(tmp, *buf, (pos + 1) * sizeof(char));
     tmp[pos + 1] = '\0';
@@ -51,9 +54,9 @@ char* get_next_line(int fd) {
         if (done_reading) {
             return remove_as_string(&buf, &size, size - 1);
         }
-        size_t read_size = read(fd, new, BUF_SIZE);
-        if (read_size < BUF_SIZE) {
-            if (read_size == 0) {
+        ssize_t read_size = read(fd, new, BUFFER_SIZE);
+        if (read_size < BUFFER_SIZE) {
+            if (read_size < 0) {
                 return NULL;
             }
             done_reading = true;
