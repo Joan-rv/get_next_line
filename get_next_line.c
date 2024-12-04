@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#define BUF_SIZE 4096
+#define BUFFER_SIZE 4096
 
 size_t min(size_t a, size_t b) {
     if (a < b) {
