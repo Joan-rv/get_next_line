@@ -1,6 +1,6 @@
 NAME=libgnl
 CC=gcc
-CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
+CFLAGS=-fPIC -Wall -Wextra -Werror -I.
 AR=ar
 RM=rm -f
 OBJ=get_next_line.o
