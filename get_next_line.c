@@ -44,7 +44,6 @@ char* get_next_line(int fd) {
     static char* buf = NULL;
     static size_t size = 0;
     bool done_reading = false;
-    char* new;
     while (true) {
         for (size_t i = 0; i * sizeof(char) < size; i++) {
             if (buf[i] == '\n') {
@@ -54,18 +53,16 @@ char* get_next_line(int fd) {
         if (done_reading) {
             return remove_as_string(&buf, &size, size - 1);
         }
-        new = malloc(BUFFER_SIZE);
-        ssize_t read_size = read(fd, new, BUFFER_SIZE);
+        buf = memresize(buf, size, size + BUFFER_SIZE);
+        ssize_t read_size = read(fd, buf + size, BUFFER_SIZE);
         if (read_size < BUFFER_SIZE) {
             if (read_size < 0) {
-                free(new);
+                free(buf);
                 return NULL;
             }
             done_reading = true;
         }
-        buf = memresize(buf, size, size + read_size);
-        memcpy(buf + size / sizeof(char), new, read_size);
+        buf = memresize(buf, size + BUFFER_SIZE, size + read_size);
         size += read_size;
-        free(new);
     }
 }
