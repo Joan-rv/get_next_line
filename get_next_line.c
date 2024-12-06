@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
+#endif
 
 size_t min(size_t a, size_t b) {
     if (a < b) {
