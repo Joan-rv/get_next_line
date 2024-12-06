@@ -14,6 +14,10 @@ int main(int argc, char** argv) {
         fd = 0;
     } else {
         fd = open(argv[1], O_RDONLY);
+        if (fd < 0) {
+            perror("open");
+            return -1;
+        }
     }
     char* line;
     while ((line = get_next_line(fd))) {
