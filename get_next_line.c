@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 1
@@ -37,30 +38,47 @@ char* remove_as_string(char** buf, size_t* size, size_t pos) {
     return tmp;
 }
 
+void init_static(char*** buf, size_t** size, rlim_t* fd_max) {
+    struct rlimit rlp;
+    getrlimit(RLIMIT_NOFILE, &rlp);
+    *fd_max = rlp.rlim_cur;
+    *buf = calloc(*fd_max, sizeof(char*));
+    *size = calloc(*fd_max, sizeof(size_t));
+}
+
 char* get_next_line(int fd) {
-    static char* buf = NULL;
-    static size_t size = 0;
+    static char** buf = NULL;
+    static size_t* size = NULL;
+    static rlim_t fd_max;
+
+    if (buf == NULL) {
+        init_static(&buf, &size, &fd_max);
+    }
+    if (fd < 0 || fd_max < (rlim_t)fd) {
+        return NULL;
+    }
+
     bool done_reading = false;
     while (true) {
-        for (size_t i = 0; i * sizeof(char) < size; i++) {
-            if (buf[i] == '\n') {
-                return remove_as_string(&buf, &size, i);
+        for (size_t i = 0; i * sizeof(char) < size[fd]; i++) {
+            if (buf[fd][i] == '\n') {
+                return remove_as_string(&buf[fd], &size[fd], i);
             }
         }
         if (done_reading) {
-            return remove_as_string(&buf, &size, size - 1);
+            return remove_as_string(&buf[fd], &size[fd], size[fd] - 1);
         }
-        buf = memresize(buf, size + BUFFER_SIZE);
-        ssize_t read_size = read(fd, buf + size, BUFFER_SIZE);
+        buf[fd] = memresize(buf[fd], size[fd] + BUFFER_SIZE);
+        ssize_t read_size = read(fd, buf[fd] + size[fd], BUFFER_SIZE);
         if (read_size < BUFFER_SIZE) {
             if (read_size < 0) {
-                buf = memresize(buf, 0);
-                size = 0;
+                buf[fd] = memresize(buf[fd], 0);
+                size[fd] = 0;
                 return NULL;
             }
             done_reading = true;
-            buf = memresize(buf, size + read_size);
+            buf[fd] = memresize(buf[fd], size[fd] + read_size);
         }
-        size += read_size;
+        size[fd] += read_size;
     }
 }
